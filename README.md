@@ -1,4 +1,4 @@
-# pTool
+# pTools
 ## Overview
 Powershell script utilities 
 - git
