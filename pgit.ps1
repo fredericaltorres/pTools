@@ -96,6 +96,7 @@ Command line options:
     commit
     commit -m ""message""
     push
+    pull # pull the current repo
     commit push BranchName -m ""message"" # add file, commit and push to branch
     check in -m ""message"" # add file, commit and push to current branch
 
@@ -162,6 +163,8 @@ switch($action) {
     # delete-shelveset    {  iEx (t_(  'git stash drop stash@{0}' )) }
 
     push                {  iEx (t_(  "git push -u origin $(validObjectName($objectName))"  )) }
+
+    pull                {  iEx (t_(  "git pull"  )) }
 
     commit              {
         if($message -ne "") {
