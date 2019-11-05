@@ -9,9 +9,9 @@
 param(
     [Parameter(Mandatory=$true)] 
     [Alias('f')]
-    #[string]
+    #[ValidateSet('dotnet', 'vb6')]
     $wildcard,
-
+    
     [Parameter(Mandatory=$false)]
     [Alias('s')]
     [string]$searchForRegEx = "",
@@ -32,7 +32,7 @@ if($excludeBinary) {
     $exclude = $exclude + @("*.exe","*.pdb","*.dll", "node_modules", "*.bak")
 }
 if($wildcard -eq "dotnet") {
-    $wildcard = @("*.cs", "*.aspx", "*.ascx", "*.asax")
+    $wildcard = @("*.cs", "*.aspx", "*.ascx", "*.asax", "*.csproj", "*.sln")
 }
 if($wildcard -eq "vb6") {
     $wildcard = @("*.cls", "*.bas", "*.vbp")
