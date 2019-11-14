@@ -37,17 +37,21 @@ if($wildcard -eq "dotnet") {
 if($wildcard -eq "vb6") {
     $wildcard = @("*.cls", "*.bas", "*.vbp")
 }
+
 $scriptTitle = "FindFile ff"
-# Write-Host "searchForRegEx:$searchForRegEx, IsNull:$($null -eq $searchForRegEx)"
+
+if($exclude.length -eq 0) {
+    $exclude = $null
+}
 
 if($searchForRegEx -eq "") {
     Write-Host "$scriptTitle - wildcard: $wildcard"
-    Get-ChildItem -path $path -rec -include $wildcard
+    Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude 
 }
 else {
     Write-Host "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx'"
     if($path -ne ".") {
         Write-Host "path:'$path'"
     }
-    Get-ChildItem -path $path -rec -include $wildcard -Exclude $exclude | select-string $searchForRegEx -list
+    Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude | select-string $searchForRegEx -list 
 }
