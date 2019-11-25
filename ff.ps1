@@ -22,7 +22,7 @@ param(
 
     [Parameter(Mandatory=$false)]
     [Alias('p')]
-    [string]$path = ".",
+    $paths = @("."),
 
     [Parameter(Mandatory=$false)]
     [Alias('e')]
@@ -56,31 +56,42 @@ if($exclude.length -eq 0) {
     $exclude = $null
 }
 
-if($replace -eq "") {
+# Search mode only
+if($replace -eq "") { 
 
-    if($searchForRegEx -eq "") {
+    if($searchForRegEx -eq "") { 
+        # Only search based on the filename
         Write-Host "$scriptTitle - wildcard: $wildcard"
-        Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude 
+        foreach($path in $paths) {
+            Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude 
+        }
     }
-    else {
+    else { 
+        # Search on filename + content
         Write-Host "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx'"
         if($path -ne ".") {
             Write-Host "path:'$path'"
         }
-        Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude | select-string $searchForRegEx -list 
+        foreach($path in $paths) {
+            Write-Host "path:$path"
+            Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude | select-string $searchForRegEx -list 
+        }
     }
 }
-else {
-Write-Host "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx' replace:'$replace'"
-    $files = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
-    foreach ($file in $files)
-    {
-        $content = Get-Content $file.PSPath
-        if($content -match $searchForRegEx) {
+else { 
+    # Search/Replace mode
+    Write-Host "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx' replace:'$replace'"
+    foreach($path in $paths) {
+        $files = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
+        foreach ($file in $files)
+        {
+            $content = Get-Content $file.PSPath
+            if($content -match $searchForRegEx) {
 
-            Write-Host "Updating file $file"
-            $content = $content -replace $searchForRegEx, $replace         
-            $content | Set-Content $file.PSPath
+                Write-Host "Updating file $file"
+                $content = $content -replace $searchForRegEx, $replace         
+                $content | Set-Content $file.PSPath
+            }
         }
     }
 }
