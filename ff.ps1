@@ -50,48 +50,64 @@ if($wildcard -eq "allcode") {
     $wildcard = $vb6FileExtensions + $dotNetFileExtensions + $classicAspFileExtensions + $javaScriptFrontEndFileExtensions
 }
 
+function showUserBanner([string]$msg) {
+
+    Write-Host $msg -ForegroundColor Yellow
+}
+function showUserInfo([string]$msg) {
+
+    Write-Host $msg -ForegroundColor Green
+}
+
 $scriptTitle = "FindFile ff"
 
 if($exclude.length -eq 0) {
     $exclude = $null
 }
 
-# Search mode only
-if($replace -eq "") { 
+if($replace -eq "") {  # Search mode only
 
-    if($searchForRegEx -eq "") { 
-        # Only search based on the filename
-        Write-Host "$scriptTitle - wildcard: $wildcard"
+    if($searchForRegEx -eq "") {  # Only search based on the filename
+        
+        showUserBanner "$scriptTitle - wildcard: $wildcard"
         foreach($path in $paths) {
+
+            showUserInfo "path:$path"
             Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude 
         }
     }
     else { 
         # Search on filename + content
-        Write-Host "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx'"
+        showUserBanner "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx'"
         if($path -ne ".") {
-            Write-Host "path:'$path'"
+
+            showUserInfo "path:'$path'"
         }
         foreach($path in $paths) {
-            Write-Host "path:$path"
+
+            showUserInfo "path:$path"
             Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude | select-string $searchForRegEx -list 
         }
     }
 }
-else { 
-    # Search/Replace mode
-    Write-Host "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx' replace:'$replace'"
+else { # Search/Replace mode
+    
+    showUserBanner "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx' replace:'$replace'"
     foreach($path in $paths) {
+
         $files = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
-        foreach ($file in $files)
-        {
+
+        foreach ($file in $files) {
+
             $content = Get-Content $file.PSPath
             if($content -match $searchForRegEx) {
 
-                Write-Host "Updating file $file"
+                showUserInfo "Updating file $file"
                 $content = $content -replace $searchForRegEx, $replace         
                 $content | Set-Content $file.PSPath
             }
         }
     }
 }
+
+showUserInfo "`r`n$scriptTitle - done"
