@@ -32,10 +32,12 @@ param(
     [Alias('eb')]
     [bool]$excludeBinary = $false
 )
-$dotNetFileExtensions = @("*.cs", "*.aspx", "*.ascx", "*.asax", "*.csproj", "*.sln")
+$dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js")
 $vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
 $classicAspFileExtensions = @("*.asp", "*.vbs")
 $javaScriptFrontEndFileExtensions = @("*.js", "*.ts", "*.json")
+
+
 
 if($excludeBinary) {
     $exclude = $exclude + @("*.exe","*.pdb","*.dll", "node_modules", "*.bak")
@@ -49,7 +51,6 @@ if($wildcard -eq "vb6") {
 if($wildcard -eq "allcode") {
     $wildcard = $vb6FileExtensions + $dotNetFileExtensions + $classicAspFileExtensions + $javaScriptFrontEndFileExtensions
 }
-
 function showUserBanner([string]$msg) {
 
     Write-Host $msg -ForegroundColor Yellow
