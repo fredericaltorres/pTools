@@ -33,12 +33,13 @@ param(
     [bool]$excludeBinary = $false,
 
     [Parameter(Mandatory=$false)]
-    [string]$editor = "C:\Users\ftorres\AppData\Local\Programs\Microsoft VS Code\Code.exe",
+    [Alias('ed')]
+    [switch]$edit = $false,
 
     [Parameter(Mandatory=$false)]
-    [Alias('ed')]
-    [switch]$edit = $false
+    [string]$editor = "C:\Users\ftorres\AppData\Local\Programs\Microsoft VS Code\Code.exe"    
 )
+
 $dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js")
 $vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
 $classicAspFileExtensions = @("*.asp", "*.vbs")
@@ -83,10 +84,23 @@ function printResultFiles($r) {
     Write-Host ($r -join [System.Environment]::NewLine)
 }
 
-function openWithEditor($file) {
+function openWithEditor($files) {
 
-    write-host "$editor" "`"$file`""
-    & "$editor" "`"$file`""
+    foreach($file in $files) {
+
+        #write-host "$editor" "`"$file`""
+        & "$editor" "`"$file`""
+    }
+}
+
+
+function convertMatchInfo($matchInfos) {
+
+    $r = @()
+    foreach($matchInfo in $matchInfos) {
+        $r += $matchInfo.RelativePath("")
+    }
+    return $r
 }
 
 $scriptTitle = "FindFile ff"
@@ -104,9 +118,12 @@ if($replace -eq "") {  # Search mode only
 
             showUserInfo "path:$path"
             $r = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
-            printResultFiles(convertToArray($r))
-            if($edit) {
-                openWithEditor $r[0]
+            if($r -ne $null) {
+                $r = convertToArray($r)
+                printResultFiles($r)
+                if($edit) {
+                    openWithEditor $r
+                }
             }
         }
     }
@@ -121,7 +138,13 @@ if($replace -eq "") {  # Search mode only
 
             showUserInfo "path:$path"
             $r = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude | select-string $searchForRegEx -list 
-            printResultFiles(convertToArray($r))
+            if($r -ne $null) {
+                $r = convertToArray($r)
+                printResultFiles($r)
+                if($edit) {
+                    openWithEditor(convertMatchInfo($r))                
+                }
+            }
         }
     }
 }
