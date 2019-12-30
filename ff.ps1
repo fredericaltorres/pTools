@@ -10,7 +10,7 @@ param(
     [Parameter(Mandatory=$true)] ## $true
     [Alias('f')]
     #[ValidateSet('dotnet', 'vb6', 'allcode')]
-    $wildcard,
+    $wildcard = "",
     
     [Parameter(Mandatory=$false)]
     [Alias('s')]
@@ -30,7 +30,14 @@ param(
 
     [Parameter(Mandatory=$false)]
     [Alias('eb')]
-    [bool]$excludeBinary = $false
+    [bool]$excludeBinary = $false,
+
+    [Parameter(Mandatory=$false)]
+    [string]$editor = "C:\Users\ftorres\AppData\Local\Programs\Microsoft VS Code\Code.exe",
+
+    [Parameter(Mandatory=$false)]
+    [Alias('ed')]
+    [switch]$edit = $false
 )
 $dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js")
 $vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
@@ -51,13 +58,35 @@ if($wildcard -eq "vb6") {
 if($wildcard -eq "allcode") {
     $wildcard = $vb6FileExtensions + $dotNetFileExtensions + $classicAspFileExtensions + $javaScriptFrontEndFileExtensions
 }
+
 function showUserBanner([string]$msg) {
 
     Write-Host $msg -ForegroundColor Yellow
 }
+
 function showUserInfo([string]$msg) {
 
     Write-Host $msg -ForegroundColor Green
+}
+
+function convertToArray($result) {
+
+    if($result.GetType().Name -ne "Object[]") {
+
+        $result = @($result)
+    }
+    return $result
+}
+
+function printResultFiles($r) {
+
+    Write-Host ($r -join [System.Environment]::NewLine)
+}
+
+function openWithEditor($file) {
+
+    write-host "$editor" "`"$file`""
+    & "$editor" "`"$file`""
 }
 
 $scriptTitle = "FindFile ff"
@@ -74,7 +103,11 @@ if($replace -eq "") {  # Search mode only
         foreach($path in $paths) {
 
             showUserInfo "path:$path"
-            Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude 
+            $r = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
+            printResultFiles(convertToArray($r))
+            if($edit) {
+                openWithEditor $r[0]
+            }
         }
     }
     else { 
@@ -87,7 +120,8 @@ if($replace -eq "") {  # Search mode only
         foreach($path in $paths) {
 
             showUserInfo "path:$path"
-            Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude | select-string $searchForRegEx -list 
+            $r = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude | select-string $searchForRegEx -list 
+            printResultFiles(convertToArray($r))
         }
     }
 }
