@@ -40,7 +40,7 @@ param(
     [string]$editor = "C:\Users\ftorres\AppData\Local\Programs\Microsoft VS Code\Code.exe"    
 )
 
-$dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js", "*.csproj")
+$dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.ashx", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js", "*.csproj")
 $vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
 $classicAspFileExtensions = @("*.asp", "*.vbs")
 $javaScriptFrontEndFileExtensions = @("*.js", "*.ts", "*.json")
