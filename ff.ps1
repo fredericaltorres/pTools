@@ -18,7 +18,7 @@ param(
 
     [Parameter(Mandatory=$false)]
     [Alias('r')]
-    [string]$replace = "",
+    [string]$replace = '',
 
     [Parameter(Mandatory=$false)]
     [Alias('p')]
@@ -109,11 +109,11 @@ if($exclude.length -eq 0) {
     $exclude = $null
 }
 
-if($replace -eq "") {  # Search mode only
+if($replace -eq '') {  # Search mode only
 
     if($searchForRegEx -eq "") {  # Only search based on the filename
         
-        showUserBanner "$scriptTitle - wildcard: $wildcard"
+        showUserBanner "$scriptTitle - FileName Search Mode - wildcard: $wildcard"
         foreach($path in $paths) {
 
             showUserInfo "path:$path"
@@ -129,7 +129,7 @@ if($replace -eq "") {  # Search mode only
     }
     else { 
         # Search on filename + content
-        showUserBanner "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx'"
+        showUserBanner "$scriptTitle - FileName/Content Search Mode - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx'"
         if($path -ne ".") {
 
             showUserInfo "path:'$path'"
@@ -150,7 +150,7 @@ if($replace -eq "") {  # Search mode only
 }
 else { # Search/Replace mode
     
-    showUserBanner "$scriptTitle - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx' replace:'$replace'"
+    showUserBanner "$scriptTitle - Search/Replace Content Mode - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx' replace:'$replace'"
     foreach($path in $paths) {
 
         $files = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
