@@ -95,9 +95,10 @@ Command line options:
     status
     commit
     commit -m ""message""
+    commit push -m ""message""
     push
     pull # pull the current repo
-    commit push BranchName -m ""message"" # add file, commit and push to branch
+    
     check in -m ""message"" # add file, commit and push to current branch
 
     undo last-commit-file fileName # undo the last commit for one specific file
@@ -122,6 +123,19 @@ Command line options:
 
 function addFiles() {
     iEx (t_(  "git add . " ))
+}
+
+function commit([bool] $push) {
+    if($message -ne "") {
+        write-host "Commit current changes under message:$message"
+        iEx (t_( "git commit -m ""$message"" " )) 
+    }
+    else {
+        iEx (t_(  "git commit" )) 
+    }
+    if($push) {
+        iEx (t_(  "git push" )) 
+    }
 }
 
 
@@ -167,28 +181,11 @@ switch($action) {
     pull                {  iEx (t_(  "git pull"  )) }
 
     commit              {
-        if($message -ne "") {
-            write-host "Commit current changes under message:$message"
-            iEx (t_( "git commit -m ""$message"" " )) 
-        }
-        else {
-            iEx (t_(  "git commit" )) 
-        }
+        commit $false
     }
 
     commit-push {
-        if($message -ne "") {
-            write-host "About to commit current changes under message:$message"  -ForegroundColor Cyan
-            write-host "About to push to branch $objectName" -ForegroundColor Magenta
-            write-host "Hit space to continue, or Ctrl+C to abort"
-            pause
-            addFiles
-            iEx (t_( "git commit -m ""$message"" " )) 
-            iEx (t_(  "git push -u origin $(validObjectName($objectName))"  ))
-        }
-        else {
-            Write-Error "commit-push require a message set with parameter -m"
-        }
+        commit $true
     }
 
     check-in {
