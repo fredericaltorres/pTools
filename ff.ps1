@@ -9,7 +9,6 @@
 param(
     [Parameter(Mandatory=$true)] ## $true
     [Alias('f')]
-    #[ValidateSet('dotnet', 'vb6', 'allcode')]
     $wildcard = "",
     
     [Parameter(Mandatory=$false)]
@@ -37,8 +36,13 @@ param(
     [switch]$edit = $false,
 
     [Parameter(Mandatory=$false)]
-    [string]$editor = "C:\Users\ftorres\AppData\Local\Programs\Microsoft VS Code\Code.exe"    
+    [string]$editor = "C:\Users\ftorres\AppData\Local\Programs\Microsoft VS Code\Code.exe"    ,
+
+    [Parameter(Mandatory=$false)]
+    [Alias('d')]
+    [bool]$deleteFile = $false
 )
+
 
 $dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.ashx", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js", "*.csproj", "*.sql")
 $vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
@@ -124,6 +128,16 @@ if($replace -eq '') {  # Search mode only
                 if($edit) {
                     openWithEditor $r
                 }
+                if($deleteFile) {
+                    $confimDeletion = Read-Host -Prompt 'Delete files above ? [yes, no]'
+                    if($confimDeletion -eq "yes") {
+                        foreach($f in $r) {
+                            write-output "Deleting $($f.FullName)"
+                            remove-item -Path $f.FullName
+                        }
+                    }
+                }
+
             }
         }
     }
