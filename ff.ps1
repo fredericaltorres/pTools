@@ -48,11 +48,13 @@ $dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html"
 $vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
 $classicAspFileExtensions = @("*.asp", "*.vbs")
 $javaScriptFrontEndFileExtensions = @("*.js", "*.ts", "*.json")
-
-
+$cFileExtensions = @("*.c", "*.h", "*.cpp")
 
 if($excludeBinary) {
     $exclude = $exclude + @("*.exe","*.pdb","*.dll", "node_modules", "*.bak")
+}
+if($wildcard -eq "c") {
+    $wildcard = $cFileExtensions
 }
 if($wildcard -eq "dotnet") {
     $wildcard = $dotNetFileExtensions
