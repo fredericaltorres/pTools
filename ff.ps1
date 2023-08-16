@@ -44,7 +44,7 @@ param(
 )
 
 
-$dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.ashx", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js", "*.csproj", "*.sql")
+$dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.ashx", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js", "*.csproj", "*.sql", "*.ts")
 $vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
 $classicAspFileExtensions = @("*.asp", "*.vbs")
 $javaScriptFrontEndFileExtensions = @("*.js", "*.ts", "*.json")
