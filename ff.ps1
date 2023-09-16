@@ -7,7 +7,7 @@
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)] ## $true
+    [Parameter(Mandatory=$true)]
     [Alias('f')]
     $wildcard = "",
     
@@ -43,6 +43,12 @@ param(
     [bool]$deleteFile = $false
 )
 
+# "-f $wildcard, -s $searchForRegEx -r $replace"
+# pause
+
+if($searchForRegEx -eq "-" -or $replace -eq "-") {
+
+}
 
 $dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.ashx", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js", "*.csproj", "*.sql", "*.ts")
 $vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
@@ -103,7 +109,6 @@ function openWithEditor($files) {
     }
 }
 
-
 function convertMatchInfo($matchInfos) {
 
     $r = @()
@@ -143,7 +148,6 @@ if($replace -eq '') {  # Search mode only
                         }
                     }
                 }
-
             }
         }
     }
@@ -171,18 +175,21 @@ if($replace -eq '') {  # Search mode only
 else { # Search/Replace mode
     
     showUserBanner "$scriptTitle - Search/Replace Content Mode - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx' replace:'$replace'"
-    foreach($path in $paths) {
+    $answer = Read-Host -Prompt 'Confirm search/replace? [y, n]'
+    if($answer -eq "y") {
+        foreach($path in $paths) {
 
-        $files = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
+            $files = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
 
-        foreach ($file in $files) {
+            foreach ($file in $files) {
 
-            $content = Get-Content $file.PSPath
-            if($content -match $searchForRegEx) {
+                $content = Get-Content $file.PSPath
+                if($content -match $searchForRegEx) {
 
-                showUserInfo "Updating file $file"
-                $content = $content -replace $searchForRegEx, $replace         
-                $content | Set-Content $file.PSPath
+                    showUserInfo "Updating file $file"
+                    $content = $content -replace $searchForRegEx, $replace         
+                    $content | Set-Content $file.PSPath
+                }
             }
         }
     }
