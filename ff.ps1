@@ -46,9 +46,7 @@ param(
 # "-f $wildcard, -s $searchForRegEx -r $replace"
 # pause
 
-if($searchForRegEx -eq "-" -or $replace -eq "-") {
 
-}
 
 $dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.ashx", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js", "*.csproj", "*.sql", "*.ts")
 $vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
@@ -84,6 +82,11 @@ function showUserBanner([string]$msg) {
 function showUserInfo([string]$msg) {
 
     Write-Host $msg -ForegroundColor Green
+}
+
+function showUserError([string]$msg) {
+
+    Write-Host $msg -ForegroundColor Red
 }
 
 function convertToArray($result) {
@@ -122,6 +125,10 @@ $scriptTitle = "FindFile ff"
 
 if($exclude.length -eq 0) {
     $exclude = $null
+}
+
+if($searchForRegEx -eq "-" -or $replace -eq "-") {
+    showUserError "Invalid parameter searchForRegEx:$searchForRegEx, replace:$replace"
 }
 
 if($replace -eq '') {  # Search mode only
