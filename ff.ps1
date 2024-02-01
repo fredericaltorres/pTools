@@ -1,205 +1,293 @@
 <#
-    .SYNOPSIS
-        Helper to search for files and in files from the current folder or not
-    .DESCRIPTION
-    .NOTES
-        Frederic Torres 2019
+    Git command helper/reminder written in powershell
+    Torres Frederic 2018
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
-    [Alias('f')]
-    $wildcard = "",
-    
-    [Parameter(Mandatory=$false)]
-    [Alias('s')]
-    [string]$searchForRegEx = "",
-
-    [Parameter(Mandatory=$false)]
-    [Alias('r')]
-    [string]$replace = '',
-
-    [Parameter(Mandatory=$false)]
-    [Alias('p')]
-    $paths = @("."),
-
-    [Parameter(Mandatory=$false)]
-    [Alias('e')]
-    $exclude = @(),
-
-    [Parameter(Mandatory=$false)]
-    [Alias('eb')]
-    [bool]$excludeBinary = $false,
-
-    [Parameter(Mandatory=$false)]
-    [Alias('ed')]
-    [switch]$edit = $false,
-
-    [Parameter(Mandatory=$false)]
-    [string]$editor = "C:\Users\ftorres\AppData\Local\Programs\Microsoft VS Code\Code.exe"    ,
-
-    [Parameter(Mandatory=$false)]
-    [Alias('d')]
-    [bool]$deleteFile = $false
+    [Parameter(Mandatory=$false, Position=0)]
+    [string]$verb         = "status",
+    [Parameter(Mandatory=$false, Position=1)]
+    [string]$object       = "",
+    [Parameter(Mandatory=$false, Position=2)]
+    [string]$objectName   = "",
+    [Parameter(Mandatory=$false, Position=3)]
+    [string]$objectName2  = "",
+    [Parameter(Mandatory=$false, Position=4)]
+    [Alias('m')]
+    [string]$message = ""
 )
 
-# "-f $wildcard, -s $searchForRegEx -r $replace"
-# pause
+$TEMP_FILE_NAME = ".\pgit.txt"
 
-
-
-$dotNetFileExtensions = @("*.vb", "*.resx", "*.xsd", "*.wsdl", "*.htm", "*.html", "*.ashx", "*.aspx", "*.ascx", "*.asmx", "*.svc", "*.asax", "*.config", "*.asp", "*.asa", "*.cshtml", "*.vbhtml", "*.css", "*.xml", "*.cs", "*.js", "*.csproj", "*.sql", "*.ts")
-$vb6FileExtensions = @("*.cls", "*.bas", "*.vbp")
-$classicAspFileExtensions = @("*.asp", "*.vbs")
-$javaScriptFrontEndFileExtensions = @("*.js", "*.ts", "*.json")
-$cFileExtensions = @("*.c", "*.h", "*.cpp")
-$textFileExtensions = @("*.txt", "*.log", "*.md", "*.csv")
-
-if($excludeBinary) {
-    $exclude = $exclude + @("*.exe","*.pdb","*.dll", "node_modules", "*.bak")
+# A function just to trace the final git command line
+function t_($ex) {
+    write-host "git translation -> $ex"  -ForegroundColor DarkCyan
+    return $ex
 }
-if($wildcard -eq "c") {
-    $wildcard = $cFileExtensions
-}
-if($wildcard -eq "text") {
-    $wildcard = $textFileExtensions
-}
-if($wildcard -eq "dotnet") {
-    $wildcard = $dotNetFileExtensions
-}
-if($wildcard -eq "vb6") {
-    $wildcard = $vb6FileExtensions
-}
-if($wildcard -eq "allcode") {
-    $wildcard = $vb6FileExtensions + $dotNetFileExtensions + $classicAspFileExtensions + $javaScriptFrontEndFileExtensions
-}
-
-function showUserBanner([string]$msg) {
-
-    Write-Host $msg -ForegroundColor Yellow
-}
-
-function showUserInfo([string]$msg) {
-
-    Write-Host $msg -ForegroundColor Green
-}
-
-function showUserError([string]$msg) {
-
-    Write-Host $msg -ForegroundColor Red
-}
-
-function convertToArray($result) {
-
-    if($result.GetType().Name -ne "Object[]") {
-
-        $result = @($result)
-    }
-    return $result
-}
-
-function printResultFiles($r) {
-
-    Write-Host ($r -join [System.Environment]::NewLine)
-}
-
-function openWithEditor($files) {
-
-    foreach($file in $files) {
-
-        #write-host "$editor" "`"$file`""
-        & "$editor" "`"$file`""
+function deleteFile ($fileName) {
+    if(Test-Path $fileName -PathType Leaf) {
+        remove-item $fileName
     }
 }
-
-function convertMatchInfo($matchInfos) {
-
-    $r = @()
-    foreach($matchInfo in $matchInfos) {
-        $r += $matchInfo.RelativePath("")
+function deleteTempFile () {
+    deleteFile $TEMP_FILE_NAME
+}
+function getTempFileContent() {
+    return (get-content $TEMP_FILE_NAME)
+}
+function validObjectName($oName) {
+    if($oName -eq "" -or $oName -eq $null) {
+        throw "Cannot perform action of ObjectName:'$oName'"   
     }
-    return $r
+    return $oName
+}
+$ShortCutToCommandMap = @{ 
+    sw='switch'; 
+    li='list';
+    cr='create';
+    br='branch';
+    de='delete';
+    re='rename';
+    pu='push';
+    co='commit';
+    ge='get';
+    st='status';
+    un='undo';
+    hi='history';
+    sh='shelveset';
+    uns='unshelve';
+    des='deletesure';
 }
 
-$scriptTitle = "FindFile ff"
-
-if($exclude.length -eq 0) {
-    $exclude = $null
-}
-
-if($searchForRegEx -eq "-" -or $replace -eq "-") {
-    showUserError "Invalid parameter searchForRegEx:$searchForRegEx, replace:$replace"
-}
-
-if($replace -eq '') {  # Search mode only
-
-    if($searchForRegEx -eq "") {  # Only search based on the filename
-        
-        showUserBanner "$scriptTitle - FileName Search Mode - wildcard: $wildcard"
-        foreach($path in $paths) {
-
-            showUserInfo "path:$path"
-            $r = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
-            if($r -ne $null) {
-                $r = convertToArray($r)
-                printResultFiles($r)
-                if($edit) {
-                    openWithEditor $r
-                }
-                if($deleteFile) {
-                    $confimDeletion = Read-Host -Prompt 'Delete files above ? [yes, no]'
-                    if($confimDeletion -eq "yes") {
-                        foreach($f in $r) {
-                            write-output "Deleting $($f.FullName)"
-                            remove-item -Path $f.FullName
-                        }
-                    }
-                }
-            }
-        }
+function shortCutToCommand($shortCut) {
+    if($ShortCutToCommandMap.contains($shortCut)) {
+        return $ShortCutToCommandMap[$shortCut];
     }
-    else { 
-        # Search on filename + content
-        showUserBanner "$scriptTitle - FileName/Content Search Mode - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx'"
-        if($path -ne ".") {
-
-            showUserInfo "path:'$path'"
-        }
-        foreach($path in $paths) {
-
-            showUserInfo "path:$path"
-            $r = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude | select-string $searchForRegEx -list 
-            if($r -ne $null) {
-                $r = convertToArray($r)
-                printResultFiles($r)
-                if($edit) {
-                    openWithEditor(convertMatchInfo($r))                
-                }
-            }
-        }
+    else {
+        return $shortCut;
     }
 }
-else { # Search/Replace mode
+function getCommitHistory($countCommit) {
+
+    if($countCommit -eq "") {
+        $countCommit = 2
+    }
+    iEx (t_( "git log -n $countCommit --pretty=format:""%H"" > $TEMP_FILE_NAME" ))
+    $content = getTempFileContent
+    deleteTempFile  
+    return $content
+}
+function displayCommandLineHelp() {
+        write-host @" 
+Command line options:
+
+    list [branch, url, tag, history, merge-history, shelveset, commit]
+
+    create branch branchName, 
+    switch branch branchName, 
+    delete branch branchName, 
+    deleteSure branch branchName,
+    rename branch oldBranchName newBranchName
+    push branch branchName
     
-    showUserBanner "$scriptTitle - Search/Replace Content Mode - wildcard:'$wildcard' exclude:'$exclude' search:'$searchForRegEx' replace:'$replace'"
-    $answer = Read-Host -Prompt 'Confirm search/replace? [y, n]'
-    if($answer -eq "y") {
-        foreach($path in $paths) {
+    get branch # get latest
 
-            $files = Get-ChildItem -path $path -rec -include $wildcard -exclude $exclude
+    status
+    qcommit -- quick commit with 'update message' and push
+    commit
+    commit -m ""message""
+    commit push -m ""message""
+    push
+    pull # pull the current repo
+    
+    check in -m ""message"" # add file, commit and push to current branch
 
-            foreach ($file in $files) {
+    undo last-commit-file fileName # undo the last commit for one specific file
+    undo last-commit-file fileName commit-hash # Restore one specific file from a specific commit
 
-                $content = Get-Content $file.PSPath
-                if($content -match $searchForRegEx) {
+    undo unstaged # undo changes in unstaged files
+    undo unstaged-staged # undo changes in staged and unstaged files
+    undo last-commit # undo the last commit
+    undo last-untracked-file # Remove new created file never added
+    squash Squash the last commit created
 
-                    showUserInfo "Updating file $file"
-                    $content = $content -replace $searchForRegEx, $replace         
-                    $content | Set-Content $file.PSPath
-                }
-            }
-        }
+    add files
+
+    # shelveset are stacked and can only be pushed and poped
+    list-shelveset
+    create-shelveset ""name""
+    unshelve-shelveset # unselve the selveset at the top of the stack
+
+    delete-tag ""tag"" # delete remote and local tag
+"@ -ForegroundColor cyan
+
+}
+
+function addFiles() {
+    iEx (t_(  "git add . " ))
+}
+
+function commit([bool] $push) {
+    if($message -ne "") {
+        write-host "Commit current changes under message:$message"
+        iEx (t_( "git commit -m ""$message"" " )) 
+    }
+    else {
+        iEx (t_(  "git commit" )) 
+    }
+    if($push) {
+        iEx (t_(  "git push" )) 
     }
 }
 
-showUserInfo "`r`n$scriptTitle - done"
+
+# -----
+# Main
+# -----
+
+$action = (shortCutToCommand($verb))
+if($object -ne "") {
+    $action += "-" + (shortCutToCommand($object));
+}
+write-host "pGit " -NoNewline -ForegroundColor Green
+write-host "action:$action" -ForegroundColor DarkGreen
+
+switch($action) {
+
+    squash              {
+        iEx (t_( "git log --oneline "  ))
+        iEx (t_( "git reset --soft HEAD~3"))
+        commit $false
+    }
+
+    list-url            {  iEx (t_(  "git remote -v "  )) }
+    list-branch         {  iEx (t_(  "git branch -t"  )) }
+    list-tag            {  iEx (t_(  "git tag"  )) }
+    list-history        {  iEx (t_(  "git log"  )) }
+    list-merge-history  {  iEx (t_(  "git branch --merged"  )) } # Which branches are already merged into the branch you’re on
+    status              {  iEx (t_(  "git status"  )) }
+
+    create-branch       {  iEx (t_(  "git checkout -b $(validObjectName($objectName))"  )) }
+    switch-branch       {  iEx (t_(  "git checkout $(validObjectName($objectName))"  )) }
+
+    delete-branch       {  iEx (t_(  "git branch -d $(validObjectName($objectName))"  )) }
+
+    deletesure-branch   {  iEx (t_(  "git branch -D $(validObjectName($objectName))"  )) }
+
+    rename-branch       {  iEx (t_(  "git branch -m $(validObjectName($objectName)) $(validObjectName($objectName2))"  )) }
+    push-branch         {  iEx (t_(  "git push -u origin $(validObjectName($objectName))"  )) }
+    get-branch          {  iEx (t_(  "git pull"  )) }
+
+    # https://medium.freecodecamp.org/useful-tricks-you-might-not-know-about-git-stash-e8a9490f0a1a
+    list-shelveset      {  iEx (t_(  "git stash list "  )) }
+    create-shelveset    {  iEx (t_(  'git stash save "$(validObjectName($objectName))"'  )) }        
+    unshelve-shelveset  {  iEx (t_(  'git stash pop' )) }
+    # delete-shelveset    {  iEx (t_(  'git stash drop stash@{0}' )) }
+
+    push                {  iEx (t_(  "git push -u origin $(validObjectName($objectName))"  )) }
+
+    pull                {  iEx (t_(  "git pull"  )) }
+
+    commit              {
+        commit $false
+    }
+
+    commit-push {
+        commit $true
+    }
+
+    qcommit {
+        if ($message -eq "") {
+            $message = "Update..."
+        }
+        commit $true
+    }
+
+    check-in {
+        if($message -ne "") {
+            write-host "About to commit current changes under message:$message"  -ForegroundColor Cyan
+            write-host "About to push to the current branch" -ForegroundColor Magenta
+            write-host "Hit space to continue, or Ctrl+C to abort"
+            pause
+            addFiles
+            iEx (t_( "git commit -m ""$message"" " )) 
+            iEx (t_(  "git push "  ))
+        }
+        else {
+            Write-Error "check-in require a message set with parameter -m"
+        }
+    }
+    
+    add-.           {  addFiles }
+    add-files       {  addFiles }
+
+    list-commit     {  
+        
+        $content = getCommitHistory($objectName)
+        write-host "$($content.length) commits found"
+        write-host "------------"
+        write-host "$content"
+        write-host "------------"
+        $commitId = $content[$content.length-1]
+        write-host "Last Commit: $commitId"
+    }
+
+    delete-tag {
+        iEx (t_(  "git push --delete origin $(validObjectName($objectName))"  )) 
+        iEx (t_(  "git tag --delete $(validObjectName($objectName))"  )) 
+    }
+
+<#
+    git diff 307f22619cd979d48f2bf374092e35cecd5e4ada src/components/projections/__tests__/projectionsDropdown.spec.jsx
+    git reset 307f22619cd979d48f2bf374092e35cecd5e4ada src/components/projections/__tests__/projectionsDropdown.spec.jsx
+    git checkout src/components/projections/__tests__/projectionsDropdown.spec.jsx
+    git reset HEAD src/components/projections/__tests__/projectionsDropdown.spec.jsx
+    pgit 
+    undo all
+    git reset 307f22619cd979d48f2bf374092e35cecd5e4ada
+    git checkout .
+    
+    28377a8 Tutu, 28377a8eff7c763013c4c4bfb4ecd56f748abd8e
+    git rev-parse HEAD~1 # get the hash of the last commit
+    git checkout 307f22619cd979d48f2bf374092e35cecd5e4ada -- src/components/projections/__tests__/projectionsDropdown.spec.jsx
+    git reset --hard src/components/projections/__tests__/projectionsDropdown.spec.jsx
+    git reset HEAD src/components/projections/__tests__/projectionsDropdown.spec.jsx
+    git reset 307f22619cd979d48f2bf374092e35cecd5e4ada src/components/projections/__tests__/projectionsDropdown.spec.jsx
+    git checkout 307f22619cd979d48f2bf374092e35cecd5e4ada src/components/projections/__tests__/projectionsDropdown.spec.jsx
+
+    pgit undo last-commit-file src/components/projections/__tests__/projectionsDropdown.spec.jsx
+    pgit undo last-commit-file src/components/projections/projectionsDropdown.jsx 307f22619cd979d48f2bf374092e35cecd5e4ada
+#>
+    undo-unstaged         {  iEx (t_(  "git checkout . "  )) }
+    undo-unstaged-staged  {  iEx (t_(  "git reset --hard"  )) } # Undo unstaged and staged changes
+    undo-last-commit      {  iEx (t_(  "git reset --hard HEAD~1"  )) } # Undo all files changes located in the last commit
+    undo-last-commit-file {
+
+        $fileNameToUndo = $objectName
+        $content        = getCommitHistory("")
+
+        if($objectName2 -ne "") {
+            $commitId = $objectName2
+            write-host "Commit: $commitId"
+        }
+        else {
+            $commitId = $content[$content.length-1]
+            write-host "$($content.length) commits found"
+        }
+
+        ##iEx (t_( "git reset $commitId ""$fileNameToUndo"" " )) # bring the file from the commit to staged in the local branch
+        iEx (t_( "git checkout $commitId ""$fileNameToUndo"" " )) # bring the file from staged (or the stage) to local
+        write-host "File ""$fileNameToUndo"" has been restored in staged mode, you will have to commit the change" -ForegroundColor DarkCyan
+        iEx (t_( "git status" ))
+    }
+
+    undo-untracked-file {  iEx (t_(  "git clean -f "  )) } # Remove untracked files (new files)
+    
+    "-h"                { displayCommandLineHelp }
+    "--h"               { displayCommandLineHelp }
+    "--help"            { displayCommandLineHelp }
+    "?"                 { displayCommandLineHelp }
+    help                { displayCommandLineHelp }
+
+    default             { write-error "Unknown pgit command:$action" }
+}
